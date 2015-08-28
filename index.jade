@@ -9,16 +9,17 @@ html(lang="en")
   head(prefix="og: http://ogp.me/ns#")
     meta(charset="utf-8")
     meta(name='viewport', content='width=device-width, initial-scale=1.0')
-    title template
+    title JSON 轉 CSV
     // libraries
     include library.jade
     // custom files
     link(rel="stylesheet",type="text/css",href="index.css")
+    script(type="text/javascript",src="jsonconvert.js")
     script(type="text/javascript",src="index.js")
   body(ng-app="main",ng-controller="main")
     #root
-      textarea.form-control(ng-model="json",rows="7")
+      textarea.form-control(ng-model="json",rows="7",placeholder="這裡貼上 JSON ...")
       #convert.btn.btn-default.btn-block(ng-click="convert()") Convert
-      textarea.form-control(ng-model="csv",rows="7")
+      textarea.form-control(ng-model="csv",rows="7", placeholder="這裡就會產生 CSV ")
       a#download.btn.btn-default.btn-block(ng-disabled="!download",
       ng-attr-download="{{download}}") Download
