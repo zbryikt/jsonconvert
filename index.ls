@@ -45,6 +45,7 @@ jsonconvert = do
   toCSV: (json) ->
     ret = []
     fields = @build(json)
+    if fields.length == 0 => return json.join("\n")
     values = []
     for k in fields => values.push null
     ret.push fields.map(-> "\"#{it.0.join(" / ")}\"").join(",")
