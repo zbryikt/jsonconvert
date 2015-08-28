@@ -58,4 +58,5 @@ jsonconvert = do
       ret += (fields.map(->"\"#{item[it]}\"").join(",") + "\n")
     ret
 
+if !module? => module = {}
 module.exports = jsonconvert
