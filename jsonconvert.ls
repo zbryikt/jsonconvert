@@ -3,7 +3,12 @@ jsonconvert = do
     if !Array.isArray(json) => json = [json]
     fields = {}
     idx = 1
-    for item in json => for k,v of item => if !(fields[k]) => fields[k] = typeof(v)
+    if json.length and typeof(json.0) != typeof({}) => return []
+    for item in json => 
+      if Array.isArray(item) => 
+        for i from 0 til item.length => fields[i] = typeof(item[i])
+      else 
+        for k,v of item => if !(fields[k]) => fields[k] = typeof(v)
     keys = [[k,v] for k,v of fields]
     idx = 1
     ret = []
@@ -18,8 +23,8 @@ jsonconvert = do
       ret.push values.map(->if it => "\"#it\"" else "").join(",")
       return
     field = fields[idx]
-    key = null
     data = json
+    key = null
     for i from 0 til field.0.length
       parent = data
       data = data[field.0[i]]
@@ -29,17 +34,24 @@ jsonconvert = do
       return @traverse json, fields, values, idx + 1, ret
     if !Array.isArray(data) =>
       return @traverse json, fields, values, idx + 1, ret
+    old = parent[key]
     for item in data =>
       parent[key] = item
+      if typeof(item) != typeof({}) => values[idx] = item
       @traverse json, fields, values, idx + 1, ret
+    parent[key] = old
+
 
   toCSV: (json) ->
     ret = []
     fields = @build(json)
+    if fields.length == 0 => return json.join("\n")
     values = []
     for k in fields => values.push null
     ret.push fields.map(-> "\"#{it.0.join(" / ")}\"").join(",")
-    @traverse json, fields, values, 0, ret
+    if Array.isArray(json) =>
+      for item in json => @traverse item, fields, values, 0, ret
+    else @traverse json, fields, values, 0, ret
     return ret.join("\n")
 
   find-array: (json) ->
