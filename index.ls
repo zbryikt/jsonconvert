@@ -1,7 +1,3 @@
-require! <[fs]>
-
-json = JSON.parse(fs.read-file-sync \sample.json .toString!)
-
 jsonconvert = do
   build: (json) ->
     if !Array.isArray(json) => json = [json]
@@ -12,15 +8,14 @@ jsonconvert = do
     idx = 1
     ret = []
     for [k,v] in keys => 
-      #if v != typeof({}) => ret.push [[k],idx++]
       ret.push [[k],idx++]
       if typeof(json.0[k]) == typeof({}) => 
         subfields = @build(json.0[k])
         for f in subfields => ret.push [[k] ++ f.0, idx++]
     return ret
-  traverse: (json, fields, values, idx) -> 
+  traverse: (json, fields, values, idx, ret) -> 
     if idx >= fields.length => 
-      console.log values.map(->if it => "\"#it\"" else "").join(",")
+      ret.push values.map(->if it => "\"#it\"" else "").join(",")
       return
     field = fields[idx]
     key = null
@@ -31,19 +26,21 @@ jsonconvert = do
       key = field.0[i]
     if typeof(data) != typeof({}) => 
       values[idx] = data
-      return @traverse json, fields, values, idx + 1
+      return @traverse json, fields, values, idx + 1, ret
     if !Array.isArray(data) =>
-      return @traverse json, fields, values, idx + 1
+      return @traverse json, fields, values, idx + 1, ret
     for item in data =>
       parent[key] = item
-      @traverse json, fields, values, idx + 1
+      @traverse json, fields, values, idx + 1, ret
 
   toCSV: (json) ->
+    ret = []
     fields = @build(json)
     values = []
     for k in fields => values.push null
-    console.log fields.map(-> "\"#{it.0.join(" / ")}\"").join(",")
-    @traverse json, fields, values, 0
+    ret.push fields.map(-> "\"#{it.0.join(" / ")}\"").join(",")
+    @traverse json, fields, values, 0, ret
+    return ret.join("\n")
 
   find-array: (json) ->
     if Array.isArray(json) => return json
@@ -51,13 +48,14 @@ jsonconvert = do
     for k,v of json => if @find-array(v) => return that
     return [json]
   simpleCSV: (json) ->
+    ret = ""
     json = @find-array json
     fields = {}
     for item in json => for k of item => fields[k] = 1
     fields = [k for k of fields]
-    console.log fields.map(->"\"#it\"").join(",")
+    ret += (fields.map(->"\"#it\"").join(",") + "\n")
     for item in json =>
-      console.log fields.map(->"\"#{item[it]}\"").join(",")
+      ret += (fields.map(->"\"#{item[it]}\"").join(",") + "\n")
+    ret
 
-jsonconvert.toCSV(json)
-
+module.exports = jsonconvert
