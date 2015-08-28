@@ -7,27 +7,44 @@ jsonconvert = do
     if !Array.isArray(json) => json = [json]
     fields = {}
     idx = 1
-    for item in json => for k of item => if !(fields[k]) => fields[k] = idx++
-    keys = [k for k of fields]
+    for item in json => for k,v of item => if !(fields[k]) => fields[k] = typeof(v)
+    keys = [[k,v] for k,v of fields]
     idx = 1
     ret = []
-    for k in keys => 
+    for [k,v] in keys => 
+      #if v != typeof({}) => ret.push [[k],idx++]
       ret.push [[k],idx++]
       if typeof(json.0[k]) == typeof({}) => 
         subfields = @build(json.0[k])
         for f in subfields => ret.push [[k] ++ f.0, idx++]
     return ret
-  traverse: (prefix, json, fields, values) -> 
-    if !Array.isArray(json) => json = [json]
-    for item in json =>
-      for k of item =>
+  traverse: (json, fields, values, idx) -> 
+    if idx >= fields.length => 
+      console.log values.map(->if it => "\"#it\"" else "").join(",")
+      return
+    field = fields[idx]
+    key = null
+    data = json
+    for i from 0 til field.0.length
+      parent = data
+      data = data[field.0[i]]
+      key = field.0[i]
+    if typeof(data) != typeof({}) => 
+      values[idx] = data
+      return @traverse json, fields, values, idx + 1
+    if !Array.isArray(data) =>
+      return @traverse json, fields, values, idx + 1
+    for item in data =>
+      parent[key] = item
+      @traverse json, fields, values, idx + 1
 
   toCSV: (json) ->
     fields = @build(json)
-    console.log fields
-    values = {}
-    for k of fields => values[k] = ""
-    @traverse "", json, values
+    values = []
+    for k in fields => values.push null
+    console.log fields.map(-> "\"#{it.0.join(" / ")}\"").join(",")
+    @traverse json, fields, values, 0
+
   find-array: (json) ->
     if Array.isArray(json) => return json
     if typeof(json) != typeof({}) => return null
@@ -42,5 +59,5 @@ jsonconvert = do
     for item in json =>
       console.log fields.map(->"\"#{item[it]}\"").join(",")
 
-#jsonconvert.simpleCSV(json)
+jsonconvert.toCSV(json)
 
